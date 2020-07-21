@@ -26,12 +26,14 @@ export default class HelmChartPlugin implements octant.Plugin {
 
   querySubject: Subject<string>;
   chartListSubject: Subject<any[]>;
+  currentNamespace: Subject<string>;
 
   capabilities = {
     actionNames: [
       "helm-plugin/installChart",
       "helm-plugin/queryCharts",
       "helm-plugin/deleteChart",
+      "action.octant.dev/setNamespace",
     ],
   };
 
@@ -44,11 +46,18 @@ export default class HelmChartPlugin implements octant.Plugin {
 
     this.chartListSubject = new BehaviorSubject(undefined);
     this.querySubject = new BehaviorSubject("<none>");
+    this.currentNamespace = new BehaviorSubject(undefined);
 
     this.httpGet = bindCallback(httpClient.get);
   }
 
   actionHandler(request: octant.ActionRequest): octant.ActionResponse {
+    if (request.actionName === "action.octant.dev/setNamespace") {
+      console.log(request.payload.namespace);
+      this.currentNamespace.next(request.payload.namespace);
+      return;
+    }
+
     if (request.actionName === "helm-plugin/queryCharts") {
       const query = request.payload.q;
       this.querySubject.next(query);
@@ -69,13 +78,18 @@ export default class HelmChartPlugin implements octant.Plugin {
 
     if (request.actionName === "helm-plugin/installChart") {
       try {
-        const namespace = this.dashboardClient.Namespace();
+        var namespace: string;
+        this.currentNamespace.subscribe((data) => {
+          namespace = data;
+        });
+
         const helmRelease = buildHelmRelease(
           namespace,
           request.payload.repository,
           request.payload.name,
           request.payload.version
         );
+        console.log(helmRelease);
         this.dashboardClient.Create(namespace, helmRelease);
       } catch (e) {
         console.log(e);
@@ -106,7 +120,10 @@ export default class HelmChartPlugin implements octant.Plugin {
   }
 
   contentHandler(request: octant.ContentRequest): octant.ContentResponse {
-    const namespace = this.dashboardClient.Namespace();
+    var namespace: string;
+    this.currentNamespace.subscribe((data) => {
+      namespace = data;
+    });
 
     let contentPath = request.contentPath;
     let title = [c.createText("Helm Operator Plugin")];
