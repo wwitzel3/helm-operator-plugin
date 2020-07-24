@@ -152,7 +152,9 @@ export function installedTable(dashboardClient: octant.DashboardClient, namespac
         v.metadata.namespace,
         `/overview/namespace/${v.metadata.namespace}`
       );
-      row["Status"] = c.createText(v.status.phase);
+      var status: octant.View;
+      status = (v.status !== undefined) ? c.createText(v.status.phase) : c.createText("Unknown");
+      row["Status"] = status;
 
       let payload: { [key: string]: string } = {};
       payload["name"] = v.metadata.name as string;

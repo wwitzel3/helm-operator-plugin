@@ -48,7 +48,7 @@ export default class HelmChartPlugin implements octant.Plugin {
     this.querySubject = new BehaviorSubject("<none>");
     this.currentNamespace = new BehaviorSubject(undefined);
 
-    this.httpGet = bindCallback(httpClient.get);
+    this.httpGet = bindCallback(httpClient.getJSON);
   }
 
   actionHandler(request: octant.ActionRequest): octant.ActionResponse {

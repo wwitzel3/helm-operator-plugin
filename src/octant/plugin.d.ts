@@ -57,6 +57,7 @@ export interface DashboardClient {
 
 export interface HTTPClient {
   get(url: string, callback: (response: string) => void): any;
+  getJSON(url: string, callback: (response: object) => void): any;
 }
 
 export interface PluginConstructor {
